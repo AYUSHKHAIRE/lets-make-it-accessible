@@ -1,5 +1,3 @@
-! pip install -r requirements.txt
-
 import streamlit as st
 import scrapper as sc
 import pandas as pd

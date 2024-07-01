@@ -1,5 +1,5 @@
 beautifulsoup4==4.12.3
 gTTS==2.5.1
 requests==2.32.3
-pandas==1.5.3  # or the latest version available
+pandas==2.2.2
 

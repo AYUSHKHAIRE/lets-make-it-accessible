@@ -55,15 +55,34 @@ elif st.session_state.page == "fast-search":
 
                 # Display the DataFrame with an "Announce" button for each row
                 for i, row in df.iterrows():
+                    st.markdown(f'### {row["providers"]}')
                     st.write(row['snippets'])
-                    st.write(', '.join(row['links']))
-                    st.write(row['providers'])
                     if st.button(f"Announce {i+1}", key=f"announce_{i}"):
                         audio_data = text_to_speech_base64(row['snippets'])
                         st.markdown(
                             f'<audio controls autoplay src="{audio_data}"></audio>',
                             unsafe_allow_html=True,
                         )
-                    st.write("---")
+                    links_length = len(row['links'])
+                    st.write(f'{links_length} links available')
+                    for j, a_link in enumerate(row['links']):
+                        try:
+                            website = a_link.split('.')[1]
+                            website = website.split('/')[-1]
+                            if st.button(f"Explore link {j+1} ({website})", key=f"explore_{i}_{j}"):
+                                st.write(f"[{website}]({a_link})")
+                                result = sc.main_content_scrapper(a_link)
+                                if st.button(f"Announce the {website} content :", key=f"Announce the {website} content :"):
+                                    audio_data = text_to_speech_base64(result)
+                                    st.markdown(
+                                        f'<audio controls autoplay src="{audio_data}"></audio>',
+                                        unsafe_allow_html=True,
+                                    )
+                                st.write(result)
+                            st.write("---")
+                        except:
+                            continue
             else:
                 st.warning("No results found.")
+
+

@@ -1,60 +1,26 @@
 from bs4 import BeautifulSoup
-import requests as rq
+import requests
 from requests import ConnectionError
+import streamlit as st
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
-
-'''
-a function returns the soup object , 
-else returns cannot access results 
-'''
 
 def get_response(url):
     print(url)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
     try:
-        # Set up Chrome options
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")  # Run headless Chrome
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        
-        # Initialize the Chrome WebDriver
-        driver = webdriver.Chrome( options=chrome_options)
-        
-        # Get the URL
-        driver.get(url)
-        time.sleep(2)  # Wait for the page to load
-        
-        # Get the page source and close the browser
-        page_source = driver.page_source
-        driver.quit()
-        
-        # Parse the page source with BeautifulSoup
-        soup = BeautifulSoup(page_source, 'html.parser')
-        return soup
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            return soup
+        else:
+            return f"Cannot access the results. Status code: {response.status_code}"
+    except ConnectionError:
+        return "Please check your internet connection"
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-}
-
-
-
-
-    
-
-'''
-a function telling top results by google 
-returns a structure dictionary of 
-1 . titles used by google 
-2 . urls to hit for website 
-3 . provider 
-'''
 def google_search(soup):
     results = soup.find_all('div', {'class': 'g'})
     dict_to_return = {
@@ -89,14 +55,11 @@ def google_search(soup):
 
     return dict_to_return
 
-'''
-
-a function looks for heading and text
-
-'''
-
 def main_content_scrapper(a_link):
     soup = get_response(a_link)
+    if isinstance(soup, str):
+        return soup
+
     # Remove unwanted sections like navigation and footer
     for tag in soup(['nav', 'footer', 'script', 'style']):
         tag.decompose()
@@ -107,11 +70,11 @@ def main_content_scrapper(a_link):
     for element in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'div']):
         match element.name:
             case 'h1':
-                    markdown_content += f"# {element.text}\n\n"
+                markdown_content += f"# {element.text}\n\n"
             case 'h2':
-                    markdown_content += f"## {element.text}\n\n"
+                markdown_content += f"## {element.text}\n\n"
             case 'h3':
-                    markdown_content += f"### {element.text}\n\n"
+                markdown_content += f"### {element.text}\n\n"
             case 'h4':
                 if len(element.text.split(' ')) > 2:
                     markdown_content += f"#### {element.text}\n\n"
@@ -138,3 +101,13 @@ def main_content_scrapper(a_link):
 
     return markdown_content
 
+# Streamlit interface
+st.title("Selenium and BeautifulSoup with Streamlit")
+
+url = st.text_input("Enter URL:", "https://example.com")
+if st.button("Fetch Data"):
+    response = get_response(url)
+    if isinstance(response, BeautifulSoup):
+        st.write(response.prettify())  # Print the prettified HTML
+    else:
+        st.write(response)

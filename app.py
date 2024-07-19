@@ -50,7 +50,7 @@ elif st.session_state.page == "fast-search":
             st.error(response)
         else:
             data_result = sc.google_search(response)
-            if data_result['snippets']:
+            if data_result:
                 df = pd.DataFrame(data_result)
 
                 # Display the DataFrame with an "Announce" button for each row
